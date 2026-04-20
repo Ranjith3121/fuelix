@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fuelix - Smart Fuel Pre-Booking</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root {
+            --primary:#FF5722; --primary-dark:#E64A19; --accent:#FFC107; --green:#00C896; --blue:#3B82F6;
+            --bg:#0D0D0D; --surface:#1A1A1A; --surface2:#242424; --surface3:#2E2E2E;
+            --border:rgba(255,255,255,0.08); --text:#F5F5F5; --muted:#888;
+            --font-head:'Syne',sans-serif; --font-body:'DM Sans',sans-serif;
+        }
+        *{margin:0;padding:0;box-sizing:border-box;}
+        body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;display:flex;flex-direction:column;}
+
+        nav{padding:0.8rem 5%;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(13,13,13,0.95);backdrop-filter:blur(12px);z-index:100;}
+        .logo{font-family:var(--font-head);font-size:1.5rem;font-weight:800;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:0.4rem;cursor:pointer;}
+        .logo span{color:var(--primary);}
+        .nav-links{display:flex;gap:0.4rem;}
+        .nav-btn{background:transparent;color:var(--muted);border:1px solid var(--border);padding:0.4rem 0.9rem;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:0.85rem;transition:all 0.2s;}
+        .nav-btn:hover,.nav-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .nav-user{display:none;align-items:center;gap:0.6rem;color:var(--text);font-size:0.88rem;}
+        #logoutBtn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.7rem;border-radius:5px;cursor:pointer;font-family:var(--font-body);font-size:0.82rem;transition:0.2s;}
+        #logoutBtn:hover{color:var(--primary);border-color:var(--primary);}
+
+        .main-container{flex:1;display:flex;justify-content:center;align-items:flex-start;padding:2.5rem 1rem;}
+        .section{display:none;width:100%;max-width:540px;animation:fadeUp 0.35s ease forwards;}
+        .section.active{display:block;}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+        #home-section{max-width:800px;text-align:center;padding-top:1.5rem;}
+        .hero-badge{display:inline-block;background:rgba(255,87,34,0.15);color:var(--primary);border:1px solid rgba(255,87,34,0.3);padding:0.3rem 1rem;border-radius:20px;font-size:0.82rem;font-weight:500;margin-bottom:1.2rem;}
+        .hero-title{font-family:var(--font-head);font-size:3.5rem;font-weight:800;line-height:1.05;margin-bottom:1rem;letter-spacing:-1px;}
+        .hero-title .highlight{color:var(--primary);}
+        .hero-subtitle{font-size:1rem;color:var(--muted);max-width:500px;margin:0 auto 2rem;line-height:1.7;}
+        .hero-btns{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;}
+
+        .price-ticker{display:flex;justify-content:center;gap:1rem;margin-top:2rem;flex-wrap:wrap;}
+        .price-pill{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.7rem 1.3rem;display:flex;align-items:center;gap:0.7rem;}
+        .price-pill-icon{font-size:1.1rem;}
+        .price-pill-info{text-align:left;}
+        .price-pill-label{font-size:0.7rem;color:var(--muted);}
+        .price-pill-val{font-family:var(--font-head);font-size:1.05rem;font-weight:700;color:var(--text);}
+        .price-change{font-size:0.68rem;margin-left:3px;}
+        .price-change.up{color:#f87171;}.price-change.down{color:var(--green);}
+
+        .stats-row{display:flex;justify-content:center;gap:2.5rem;margin-top:1.8rem;padding-top:1.5rem;border-top:1px solid var(--border);flex-wrap:wrap;}
+        .stat{text-align:center;}
+        .stat-num{font-family:var(--font-head);font-size:1.6rem;font-weight:700;color:var(--primary);}
+        .stat-label{font-size:0.75rem;color:var(--muted);margin-top:0.2rem;}
+
+        .card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:2rem 2.2rem;box-shadow:0 20px 60px rgba(0,0,0,0.4);}
+        .card-header{text-align:center;margin-bottom:1.8rem;}
+        .card-header h2{font-family:var(--font-head);font-size:1.7rem;font-weight:700;color:var(--text);}
+        .card-header p{color:var(--muted);font-size:0.87rem;margin-top:0.4rem;}
+
+        .form-group{margin-bottom:1.1rem;position:relative;}
+        .form-group>i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.88rem;pointer-events:none;z-index:1;}
+        .form-control{width:100%;padding:11px 14px 11px 42px;border:1px solid var(--border);border-radius:10px;font-size:0.93rem;font-family:var(--font-body);background:var(--surface2);color:var(--text);transition:all 0.2s;}
+        .form-control:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,87,34,0.12);}
+        .form-control::placeholder{color:#555;}
+        select.form-control{appearance:none;cursor:pointer;}
+        select.form-control option{background:var(--surface2);color:var(--text);}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+        .btn-primary{background:var(--primary);color:white;border:none;padding:0.75rem 1.8rem;border-radius:8px;font-size:0.95rem;font-weight:600;font-family:var(--font-body);cursor:pointer;transition:all 0.2s;}
+        .btn-primary:hover{background:var(--primary-dark);transform:translateY(-1px);}
+        .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--border);padding:0.75rem 1.8rem;border-radius:8px;font-size:0.95rem;font-family:var(--font-body);cursor:pointer;transition:all 0.2s;}
+        .btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2);}
+        .btn-submit{width:100%;background:var(--primary);color:white;border:none;padding:12px;border-radius:10px;font-size:0.95rem;font-weight:600;font-family:var(--font-body);cursor:pointer;transition:all 0.2s;margin-top:0.7rem;}
+        .btn-submit:hover{background:var(--primary-dark);}
+        .btn-submit:disabled{background:#333;color:#666;cursor:not-allowed;}
+
+        .step-block{border:1px solid var(--border);border-radius:12px;padding:1.3rem;margin-bottom:0.9rem;transition:0.3s;}
+        .step-block.active-step{border-color:rgba(255,87,34,0.4);background:rgba(255,87,34,0.04);}
+        .step-block.completed-step{border-color:rgba(0,200,150,0.25);}
+        .step-header{display:flex;align-items:center;gap:0.8rem;margin-bottom:0.8rem;}
+        .step-num{width:26px;height:26px;border-radius:50%;background:var(--primary);color:white;display:flex;align-items:center;justify-content:center;font-size:0.78rem;font-weight:700;font-family:var(--font-head);flex-shrink:0;}
+        .step-num.done{background:var(--green);}
+        .step-title{font-family:var(--font-head);font-size:0.95rem;font-weight:600;}
+        .step-subtitle{font-size:0.78rem;color:var(--muted);}
+
+        .gps-row{display:flex;gap:0.7rem;align-items:center;margin-bottom:0.9rem;}
+        .btn-gps{display:flex;align-items:center;gap:0.5rem;background:rgba(59,130,246,0.15);border:1px solid rgba(59,130,246,0.3);color:var(--blue);padding:0.55rem 1.1rem;border-radius:8px;font-size:0.85rem;font-family:var(--font-body);cursor:pointer;transition:0.2s;white-space:nowrap;}
+        .btn-gps:hover{background:rgba(59,130,246,0.25);}
+        .btn-gps.loading{opacity:0.7;cursor:not-allowed;}
+        .gps-status{font-size:0.78rem;color:var(--muted);}
+        .gps-status.found{color:var(--green);}
+        .gps-status.error{color:#f87171;}
+
+        .district-search-wrap{position:relative;}
+        #districtSearch{width:100%;padding:10px 14px 10px 42px;border:1px solid var(--border);border-radius:10px;font-size:0.9rem;font-family:var(--font-body);background:var(--surface2);color:var(--text);}
+        #districtSearch:focus{outline:none;border-color:var(--primary);}
+        #districtSearch::placeholder{color:#555;}
+        .dd-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:0.88rem;pointer-events:none;z-index:1;}
+        .district-dropdown{display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid rgba(255,87,34,0.3);border-radius:10px;max-height:190px;overflow-y:auto;z-index:50;box-shadow:0 10px 30px rgba(0,0,0,0.5);}
+        .district-dropdown.open{display:block;}
+        .district-option{padding:0.65rem 1rem;cursor:pointer;font-size:0.88rem;border-bottom:1px solid var(--border);transition:0.15s;}
+        .district-option:last-child{border:none;}
+        .district-option:hover{background:rgba(255,87,34,0.1);color:var(--primary);}
+        .district-option.selected-opt{color:var(--primary);font-weight:600;}
+
+        .area-input-wrap{margin-top:0.8rem;}
+        .area-chips{display:flex;flex-wrap:wrap;gap:0.45rem;margin-top:0.7rem;}
+        .area-chip{background:var(--surface2);border:1px solid var(--border);color:var(--muted);padding:0.3rem 0.85rem;border-radius:20px;font-size:0.78rem;cursor:pointer;transition:0.2s;}
+        .area-chip:hover,.area-chip.selected{background:rgba(255,87,34,0.15);border-color:var(--primary);color:var(--primary);}
+
+        .fuel-prices-mini{display:flex;gap:0.5rem;margin-bottom:1rem;}
+        .fuel-price-tag{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.55rem 0.5rem;text-align:center;}
+        .fpt-label{font-size:0.68rem;color:var(--muted);}
+        .fpt-val{font-family:var(--font-head);font-size:0.95rem;font-weight:700;color:var(--text);margin-top:0.1rem;}
+        .fpt-val span{font-size:0.62rem;color:var(--muted);}
+
+        .bunks-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.8rem;}
+        .bunks-count{font-size:0.8rem;color:var(--muted);}
+        .bunk-list{display:flex;flex-direction:column;gap:0.6rem;max-height:290px;overflow-y:auto;padding-right:3px;}
+        .bunk-list::-webkit-scrollbar{width:3px;}
+        .bunk-list::-webkit-scrollbar-thumb{background:var(--primary);border-radius:2px;}
+        .bunk-item{padding:0.9rem 1rem;border:1px solid var(--border);border-radius:10px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;background:var(--surface2);transition:all 0.2s;}
+        .bunk-item:hover{border-color:rgba(255,87,34,0.35);transform:translateX(3px);}
+        .bunk-item.selected{border-color:var(--primary);background:rgba(255,87,34,0.08);}
+        .bunk-info h4{font-size:0.9rem;font-weight:600;margin-bottom:0.2rem;color:var(--text);}
+        .bunk-info p{font-size:0.77rem;color:var(--muted);}
+        .bunk-meta{text-align:right;flex-shrink:0;margin-left:0.5rem;}
+        .bunk-rating{font-size:0.78rem;color:var(--accent);font-weight:600;}
+        .bunk-dist{font-size:0.72rem;color:var(--muted);margin-top:0.15rem;}
+        .bunk-prices{font-size:0.68rem;color:var(--green);margin-top:0.2rem;}
+        .no-stations{text-align:center;padding:2rem;color:var(--muted);font-size:0.88rem;}
+        .location-trail{display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:0.6rem 0.9rem;margin-bottom:0.9rem;font-size:0.82rem;color:var(--muted);align-items:center;gap:0.5rem;}
+        .location-trail.show{display:flex;}
+        .trail-text{color:var(--text);font-weight:500;}
+
+        .price-estimator{background:var(--surface2);border:1px solid rgba(0,200,150,0.2);border-radius:10px;padding:1rem;margin-top:1rem;}
+        .estimator-row{display:flex;justify-content:space-between;align-items:center;padding:0.3rem 0;}
+        .estimator-label{font-size:0.82rem;color:var(--muted);}
+        .estimator-val{font-size:0.9rem;font-weight:600;color:var(--text);}
+        .estimator-total{border-top:1px solid var(--border);margin-top:0.5rem;padding-top:0.7rem;}
+        .estimator-total .estimator-label{font-size:0.9rem;color:var(--text);font-weight:500;}
+        .estimator-total .estimator-val{font-family:var(--font-head);font-size:1.2rem;color:var(--green);}
+
+        .loader{display:none;width:32px;height:32px;border:3px solid var(--surface2);border-top:3px solid var(--primary);border-radius:50%;animation:spin 0.8s linear infinite;margin:1.2rem auto;}
+        @keyframes spin{to{transform:rotate(360deg)}}
+
+        .msg{text-align:center;margin-top:0.9rem;font-size:0.85rem;font-weight:500;display:none;padding:0.55rem;border-radius:7px;}
+        .msg.error{color:#f87171;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);display:block;}
+        .msg.success{color:var(--green);background:rgba(0,200,150,0.1);border:1px solid rgba(0,200,150,0.2);display:block;}
+        .link-text{text-align:center;margin-top:1.3rem;font-size:0.86rem;color:var(--muted);}
+        .link-text a{color:var(--primary);text-decoration:none;font-weight:600;}
+
+        #qr-container{display:flex;justify-content:center;margin:1.3rem 0;padding:1.3rem;background:white;border-radius:12px;}
+        .receipt-details{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:1.1rem;margin-top:0.9rem;}
+        .receipt-row{display:flex;justify-content:space-between;align-items:center;padding:0.45rem 0;border-bottom:1px solid var(--border);}
+        .receipt-row:last-child{border:none;padding-bottom:0;}
+        .receipt-label{font-size:0.82rem;color:var(--muted);}
+        .receipt-val{font-size:0.87rem;font-weight:600;color:var(--text);text-align:right;max-width:60%;}
+        #selectedBunkInfo{background:rgba(255,87,34,0.08);border:1px solid rgba(255,87,34,0.2);border-radius:10px;padding:0.9rem;margin-bottom:1.3rem;}
+
+        #history-section{max-width:600px;}
+        .history-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;}
+        .history-title{font-family:var(--font-head);font-size:1.7rem;font-weight:700;}
+        .btn-clear{background:transparent;border:1px solid rgba(239,68,68,0.3);color:#f87171;padding:0.4rem 0.9rem;border-radius:6px;font-size:0.8rem;font-family:var(--font-body);cursor:pointer;transition:0.2s;}
+        .btn-clear:hover{background:rgba(239,68,68,0.1);}
+        .history-empty{text-align:center;padding:3rem 1rem;color:var(--muted);}
+        .history-empty i{font-size:2.5rem;display:block;margin-bottom:1rem;color:var(--surface3);}
+        .history-list{display:flex;flex-direction:column;gap:0.9rem;}
+        .history-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;transition:0.2s;}
+        .history-card:hover{border-color:rgba(255,87,34,0.25);}
+        .hc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.8rem;}
+        .hc-id{font-family:var(--font-head);font-size:0.95rem;font-weight:700;color:var(--primary);}
+        .hc-date{font-size:0.73rem;color:var(--muted);margin-top:0.15rem;}
+        .hc-body{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;}
+        .hc-item{background:var(--surface2);border-radius:6px;padding:0.45rem 0.7rem;}
+        .hc-item-label{font-size:0.67rem;color:var(--muted);margin-bottom:0.1rem;}
+        .hc-item-val{font-size:0.85rem;font-weight:500;color:var(--text);}
+        .hc-footer{display:flex;justify-content:space-between;align-items:center;margin-top:0.8rem;padding-top:0.7rem;border-top:1px solid var(--border);}
+        .hc-total{font-family:var(--font-head);font-size:1rem;font-weight:700;color:var(--green);}
+        .hc-station{font-size:0.78rem;color:var(--muted);max-width:55%;text-align:right;}
+        .status-badge{display:inline-flex;align-items:center;gap:0.3rem;font-size:0.72rem;padding:0.2rem 0.65rem;border-radius:12px;font-weight:600;}
+        .status-badge.completed{background:rgba(0,200,150,0.15);color:var(--green);border:1px solid rgba(0,200,150,0.25);}
+
+        @media(max-width:768px){
+            .hero-title{font-size:2.4rem;}
+            .nav-links{display:none;}
+            .card{padding:1.5rem;}
+            .form-row{grid-template-columns:1fr;}
+            .price-ticker{gap:0.6rem;}
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <div class="logo" onclick="navigateTo('home')">⛽ <span>Fuel</span>ix</div>
+    <div class="nav-links" id="navAuthLinks">
+        <button class="nav-btn" onclick="navigateTo('home')">Home</button>
+        <button class="nav-btn" onclick="navigateTo('register')">Register</button>
+        <button class="nav-btn" onclick="navigateTo('login')">Login</button>
+    </div>
+    <div class="nav-user" id="navUserLinks">
+        <span><i class="fa-regular fa-user" style="color:var(--primary)"></i> <span id="userNameDisplay">User</span></span>
+        <button class="nav-btn" onclick="navigateTo('history')" style="font-size:0.78rem;padding:0.35rem 0.75rem;">
+            <i class="fa-solid fa-clock-rotate-left"></i> History
+        </button>
+        <button id="logoutBtn" onclick="logout()">Logout</button>
+    </div>
+</nav>
+
+<div class="main-container">
+
+    <!-- HOME -->
+    <section id="home-section" class="section active">
+        <div class="hero-badge">⚡ Tamil Nadu's Smartest Fuel Pre-Booking</div>
+        <h1 class="hero-title">Skip the Queue.<br><span class="highlight">Pre-Book Your Fuel.</span></h1>
+        <p class="hero-subtitle">Choose your district, pick your area, find the nearest station. Book ahead — get your QR code — scan and go.</p>
+        <div class="hero-btns">
+            <button class="btn-primary" onclick="checkAuthAndBook()"><i class="fa-solid fa-bolt"></i> &nbsp;Book Fuel Now</button>
+            <button class="btn-ghost" onclick="navigateTo('register')">Create Account →</button>
+        </div>
+        <div class="price-ticker">
+            <div class="price-pill">
+                <div class="price-pill-icon">🟢</div>
+                <div class="price-pill-info">
+                    <div class="price-pill-label">Petrol · TN Today</div>
+                    <div class="price-pill-val">₹102.63 <span class="price-change up">▲0.12</span></div>
+                </div>
+            </div>
+            <div class="price-pill">
+                <div class="price-pill-icon">🔵</div>
+                <div class="price-pill-info">
+                    <div class="price-pill-label">Diesel · TN Today</div>
+                    <div class="price-pill-val">₹94.24 <span class="price-change down">▼0.08</span></div>
+                </div>
+            </div>
+            <div class="price-pill">
+                <div class="price-pill-icon">🟡</div>
+                <div class="price-pill-info">
+                    <div class="price-pill-label">Premium · TN Today</div>
+                    <div class="price-pill-val">₹108.90 <span class="price-change up">▲0.20</span></div>
+                </div>
+            </div>
+        </div>
+        <div class="stats-row">
+            <div class="stat"><div class="stat-num">38</div><div class="stat-label">TN Districts</div></div>
+            <div class="stat"><div class="stat-num">200+</div><div class="stat-label">Fuel Stations</div></div>
+            <div class="stat"><div class="stat-num">0 min</div><div class="stat-label">Queue Time</div></div>
+        </div>
+    </section>
+
+    <!-- REGISTER -->
+    <section id="register-section" class="section">
+        <div class="card">
+            <div class="card-header"><h2>Create Account</h2><p>Join Fuelix to start booking</p></div>
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group"><i class="fa-regular fa-user"></i><input type="text" id="regUsername" class="form-control" placeholder="Your Name" required></div>
+                <div class="form-group"><i class="fa-regular fa-envelope"></i><input type="email" id="regEmail" class="form-control" placeholder="Email Address" required></div>
+                <div class="form-group"><i class="fa-solid fa-lock"></i><input type="password" id="regPassword" class="form-control" placeholder="Password" required></div>
+                <button type="submit" class="btn-submit">Create Account <i class="fa-solid fa-arrow-right"></i></button>
+                <div id="regMsg" class="msg"></div>
+            </form>
+            <div class="link-text">Already have an account? <a href="#" onclick="navigateTo('login')">Login here</a></div>
+        </div>
+    </section>
+
+    <!-- LOGIN -->
+    <section id="login-section" class="section">
+        <div class="card">
+            <div class="card-header"><h2>Welcome Back</h2><p>Login to your Fuelix account</p></div>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group"><i class="fa-regular fa-envelope"></i><input type="email" id="logEmail" class="form-control" placeholder="Email Address" required></div>
+                <div class="form-group"><i class="fa-solid fa-lock"></i><input type="password" id="logPassword" class="form-control" placeholder="Password" required></div>
+                <button type="submit" class="btn-submit">Login <i class="fa-solid fa-right-to-bracket"></i></button>
+                <div id="logMsg" class="msg"></div>
+            </form>
+            <div class="link-text">No account? <a href="#" onclick="navigateTo('register')">Register here</a></div>
+        </div>
+    </section>
+
+    <!-- LOCATION -->
+    <section id="location-section" class="section">
+        <div class="card">
+            <div class="card-header"><h2>Find Fuel Station</h2><p>District → Area → Nearest station</p></div>
+
+            <div class="gps-row">
+                <button class="btn-gps" id="gpsBtn" onclick="useGPS()">
+                    <i class="fa-solid fa-location-crosshairs"></i> Use My Location
+                </button>
+                <span class="gps-status" id="gpsStatus"></span>
+            </div>
+
+            <div class="step-block active-step" id="stepBlock1">
+                <div class="step-header">
+                    <div class="step-num" id="step1num">1</div>
+                    <div><div class="step-title">Select District</div><div class="step-subtitle">All 38 Tamil Nadu districts</div></div>
+                </div>
+                <div class="district-search-wrap">
+                    <i class="dd-icon fa-solid fa-map"></i>
+                    <input type="text" id="districtSearch" placeholder="Type district name..." autocomplete="off" oninput="filterDistricts()" onfocus="openDropdown()">
+                    <div class="district-dropdown" id="districtDropdown"></div>
+                </div>
+            </div>
+
+            <div class="step-block" id="stepBlock2">
+                <div class="step-header">
+                    <div class="step-num" id="step2num">2</div>
+                    <div><div class="step-title">Your Nearby Area</div><div class="step-subtitle">Tap a chip or type your area</div></div>
+                </div>
+                <div class="area-input-wrap">
+                    <div class="form-group" style="margin-bottom:0.5rem">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <input type="text" id="nearbyArea" class="form-control" placeholder="e.g. Fairlands, Suramangalam..." oninput="onAreaType()">
+                    </div>
+                    <div class="area-chips" id="areaChips"></div>
+                </div>
+            </div>
+
+            <button class="btn-submit" id="findStationsBtn" onclick="findStations()" disabled>
+                <i class="fa-solid fa-magnifying-glass"></i> Find Nearby Stations
+            </button>
+            <div class="loader" id="searchLoader"></div>
+
+            <div id="bunksContainer" style="display:none;margin-top:1.3rem;">
+                <div class="location-trail show" id="locationTrail">
+                    <i class="fa-solid fa-location-dot" style="color:var(--primary)"></i>
+                    <span class="trail-text" id="trailText">-</span>
+                </div>
+                <div class="fuel-prices-mini">
+                    <div class="fuel-price-tag"><div class="fpt-label">Petrol</div><div class="fpt-val" id="mpPetrol">-</div></div>
+                    <div class="fuel-price-tag"><div class="fpt-label">Diesel</div><div class="fpt-val" id="mpDiesel">-</div></div>
+                    <div class="fuel-price-tag"><div class="fpt-label">Premium</div><div class="fpt-val" id="mpPremium">-</div></div>
+                </div>
+                <div class="bunks-header">
+                    <span style="font-family:var(--font-head);font-size:0.92rem;font-weight:600;">Available Stations</span>
+                    <span class="bunks-count" id="bunksCount"></span>
+                </div>
+                <div class="bunk-list" id="bunkList"></div>
+                <button id="proceedToDetailsBtn" class="btn-submit" style="display:none;margin-top:0.9rem;background:var(--green);" onclick="goToDetails()">
+                    Proceed to Booking <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOOKING DETAILS -->
+    <section id="details-section" class="section">
+        <div class="card">
+            <div class="card-header"><h2>Booking Details</h2><p>Enter your fuel requirements</p></div>
+            <div id="selectedBunkInfo"></div>
+            <form id="bookingForm" onsubmit="handleBooking(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <i class="fa-solid fa-gas-pump"></i>
+                        <select id="fuelType" class="form-control" required onchange="updateEstimate()">
+                            <option value="" disabled selected>Fuel Type</option>
+                            <option value="Petrol">Petrol</option>
+                            <option value="Diesel">Diesel</option>
+                            <option value="Premium Petrol">Premium Petrol</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <i class="fa-solid fa-droplet"></i>
+                        <input type="number" id="fuelQty" class="form-control" placeholder="Litres" min="1" max="100" required oninput="updateEstimate()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <i class="fa-solid fa-car"></i>
+                    <input type="text" id="vehicleNum" class="form-control" placeholder="Vehicle No. (e.g. TN33AB1234)" required style="text-transform:uppercase;">
+                </div>
+                <div class="price-estimator" id="priceEstimator" style="display:none;">
+                    <div class="estimator-row"><span class="estimator-label">Fuel Type</span><span class="estimator-val" id="estFuelType">-</span></div>
+                    <div class="estimator-row"><span class="estimator-label">Rate (per litre)</span><span class="estimator-val" id="estRate">-</span></div>
+                    <div class="estimator-row"><span class="estimator-label">Quantity</span><span class="estimator-val" id="estQty">-</span></div>
+                    <div class="estimator-row estimator-total"><span class="estimator-label">Estimated Total</span><span class="estimator-val" id="estTotal">-</span></div>
+                </div>
+                <button type="submit" class="btn-submit" style="margin-top:1rem;">Confirm Booking <i class="fa-solid fa-check"></i></button>
+            </form>
+            <div class="loader" id="bookLoader"></div>
+        </div>
+    </section>
+
+    <!-- QR SUCCESS -->
+    <section id="qr-section" class="section">
+        <div class="card" style="text-align:center;">
+            <div class="card-header">
+                <h2 style="color:var(--green)"><i class="fa-solid fa-circle-check"></i> Booking Confirmed!</h2>
+                <p>Show this QR code at the fuel station</p>
+            </div>
+            <div id="qr-container"></div>
+            <div class="receipt-details" id="receiptDetails"></div>
+            <div style="display:flex;gap:0.7rem;margin-top:1.2rem;">
+                <button class="btn-submit" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);" onclick="navigateTo('history')">
+                    <i class="fa-solid fa-clock-rotate-left"></i> View History
+                </button>
+                <button class="btn-submit" style="background:var(--primary);" onclick="newBooking()">Book Again</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- HISTORY -->
+    <section id="history-section" class="section">
+        <div class="history-header">
+            <div class="history-title">My Bookings</div>
+            <button class="btn-clear" onclick="clearHistory()">Clear All</button>
+        </div>
+        <div id="historyContent"></div>
+    </section>
+
+</div>
+
+<script>
+const tnDistricts=['Ariyalur','Chengalpattu','Chennai','Coimbatore','Cuddalore','Dharmapuri','Dindigul','Erode','Kallakurichi','Kanchipuram','Kanyakumari','Karur','Krishnagiri','Madurai','Mayiladuthurai','Nagapattinam','Namakkal','Nilgiris','Perambalur','Pudukkottai','Ramanathapuram','Ranipet','Salem','Sivaganga','Tenkasi','Thanjavur','Theni','Thoothukudi','Tiruchirappalli','Tirunelveli','Tirupathur','Tiruppur','Tiruvallur','Tiruvannamalai','Tiruvarur','Vellore','Viluppuram','Virudhunagar'];
+
+const districtAreas={
+    'Salem':['Fairlands','Suramangalam','Hasthampatti','Shevapet','Fort','Ammapet','Kondalampatti','Salem Steel Plant','Yercaud Road','Attur Road'],
+    'Chennai':['T.Nagar','Adyar','Velachery','Anna Nagar','Tambaram','Chromepet','Porur','Koyambedu','Perambur','Sholinganallur'],
+    'Coimbatore':['RS Puram','Gandhipuram','Peelamedu','Singanallur','Saibaba Colony','Town Hall','Ganapathy','Vadavalli','Kuniyamuthur','Sulur'],
+    'Madurai':['Anna Nagar','KK Nagar','Tallakulam','Teppakulam','Arasaradi','Periyar Bus Stand','Goripalayam','Othakadai'],
+    'Tiruchirappalli':['Srirangam','Thillai Nagar','KK Nagar','Ariyamangalam','Woraiyur','Puthur','Tennur','Golden Rock'],
+    'Tirunelveli':['Vannarpet','Krishnapuram','Palayamkottai','Melapalayam','Pettai','Nanguneri','Ambasamudram'],
+    'Erode':['Perundurai Road','Veerappanchatram','Surampatti','Thindal','Chithode','Bhavani','Gobichettipalayam'],
+    'Vellore':['Katpadi','Sathuvachari','Gandhinagar','VIT Road','CMC Hospital Area','Fort Area','Gudiyatham'],
+    'Namakkal':['Thiruchengode','Rasipuram','Paramathi-Velur','Senthamangalam','Mohanur'],
+    'Dharmapuri':['Harur','Pennagaram','Palacode','Karimangalam','Nallampalli'],
+    'Krishnagiri':['Hosur','Pochampalli','Kaveripattinam','Bargur','Shoolagiri'],
+    'Dindigul':['Palani','Oddanchatram','Vedasandur','Natham','Batlagundu'],
+    'Thanjavur':['Kumbakonam','Papanasam','Orathanadu','Pattukkottai','Thiruvidaimarudur'],
+    'Tiruppur':['Avinashi','Palladam','Uthukuli','Dharapuram','Kangeyam'],
+    'Kanchipuram':['Chengalpattu','Madurantakam','Uthiramerur','Sriperumbudur'],
+};
+
+const stationData={
+    'Salem':{
+        'Fairlands':[{id:'s1',name:'Indian Oil - Fairlands',location:'Fairlands, Salem',distance:'0.4 km',rating:'4.6',brand:'iocl'},{id:'s2',name:'HP - Civil Lines',location:'Near Civil Lines, Fairlands',distance:'0.9 km',rating:'4.3',brand:'hpcl'}],
+        'Suramangalam':[{id:'s3',name:'Bharat Petroleum - Suramangalam',location:'Suramangalam Main Rd',distance:'0.6 km',rating:'4.5',brand:'bpcl'},{id:'s4',name:'Indian Oil - Suramangalam Bypass',location:'NH44 Bypass',distance:'1.2 km',rating:'4.2',brand:'iocl'}],
+        'Hasthampatti':[{id:'s5',name:'HP - Hasthampatti Junction',location:'Hasthampatti, Salem',distance:'0.5 km',rating:'4.4',brand:'hpcl'}],
+        'Shevapet':[{id:'s6',name:'Indian Oil - Shevapet',location:'Shevapet Main Road',distance:'0.3 km',rating:'4.7',brand:'iocl'},{id:'s7',name:'Reliance - Shevapet',location:'Near Old Bus Stand',distance:'0.7 km',rating:'4.1',brand:'reliance'}],
+        'Fort':[{id:'s8',name:'BPCL - Fort Area',location:'Fort Road, Salem',distance:'0.5 km',rating:'4.3',brand:'bpcl'}],
+        'Ammapet':[{id:'s9',name:'Indian Oil - Ammapet',location:'Ammapet Junction',distance:'0.4 km',rating:'4.5',brand:'iocl'},{id:'s10',name:'HP - Ammapet Bypass',location:'NH44, Ammapet',distance:'1.1 km',rating:'4.2',brand:'hpcl'}],
+        'Kondalampatti':[{id:'s11',name:'BPCL - Kondalampatti',location:'Kondalampatti Road',distance:'0.6 km',rating:'4.4',brand:'bpcl'}],
+        'Salem Steel Plant':[{id:'s12',name:'Indian Oil - Steel Plant Road',location:'Near Steel Plant Gate',distance:'0.8 km',rating:'4.6',brand:'iocl'}],
+        'Yercaud Road':[{id:'s13',name:'HP - Yercaud Foothills',location:'Yercaud Ghat Road',distance:'1.0 km',rating:'4.5',brand:'hpcl'}],
+        'Attur Road':[{id:'s14',name:'IOCL - Attur Highway',location:'NH77, Attur Road',distance:'2.1 km',rating:'4.3',brand:'iocl'}],
+    },
+    'Chennai':{
+        'T.Nagar':[{id:'c1',name:'Indian Oil - T.Nagar',location:'Usman Road, T.Nagar',distance:'0.3 km',rating:'4.4',brand:'iocl'},{id:'c2',name:'HP - Panagal Park',location:'Panagal Park',distance:'0.6 km',rating:'4.2',brand:'hpcl'}],
+        'Adyar':[{id:'c3',name:'BPCL - Adyar Signal',location:'Adyar Main Road',distance:'0.4 km',rating:'4.6',brand:'bpcl'},{id:'c4',name:'Indian Oil - Adyar Bridge',location:'Near Adyar Bridge',distance:'0.8 km',rating:'4.3',brand:'iocl'}],
+        'Velachery':[{id:'c5',name:'HP - Velachery',location:'Velachery Main Road',distance:'0.5 km',rating:'4.5',brand:'hpcl'}],
+        'Anna Nagar':[{id:'c6',name:'IOCL - Anna Nagar West',location:'Anna Nagar West',distance:'0.4 km',rating:'4.7',brand:'iocl'}],
+    },
+    'Coimbatore':{
+        'RS Puram':[{id:'cb1',name:'Indian Oil - RS Puram',location:'Mettupalayam Road',distance:'0.4 km',rating:'4.6',brand:'iocl'},{id:'cb2',name:'HP - DB Road',location:'DB Road, RS Puram',distance:'0.7 km',rating:'4.3',brand:'hpcl'}],
+        'Peelamedu':[{id:'cb4',name:'Indian Oil - Peelamedu',location:'Avinashi Road',distance:'0.5 km',rating:'4.4',brand:'iocl'},{id:'cb5',name:'HP - Airport Road',location:'Airport Road',distance:'1.2 km',rating:'4.6',brand:'hpcl'}],
+    },
+};
+
+const districtCoords={
+    'Salem':{lat:11.6643,lon:78.1460},'Chennai':{lat:13.0827,lon:80.2707},'Coimbatore':{lat:11.0168,lon:76.9558},
+    'Madurai':{lat:9.9252,lon:78.1198},'Tiruchirappalli':{lat:10.7905,lon:78.7047},'Erode':{lat:11.3410,lon:77.7172},
+    'Vellore':{lat:12.9165,lon:79.1325},'Tirunelveli':{lat:8.7139,lon:77.7567},'Namakkal':{lat:11.2189,lon:78.1674},
+    'Dharmapuri':{lat:12.1277,lon:78.1579},'Krishnagiri':{lat:12.5189,lon:78.2137},'Dindigul':{lat:10.3624,lon:77.9695},
+    'Thanjavur':{lat:10.7870,lon:79.1378},'Tiruppur':{lat:11.1085,lon:77.3411},'Kanchipuram':{lat:12.8352,lon:79.7036},
+    'Tiruvannamalai':{lat:12.2253,lon:79.0747},'Viluppuram':{lat:11.9375,lon:79.4931},'Karur':{lat:10.9601,lon:78.0766},
+    'Cuddalore':{lat:11.7480,lon:79.7714},'Nagapattinam':{lat:10.7660,lon:79.8428},'Thoothukudi':{lat:8.7642,lon:78.1348},
+    'Tirunelveli':{lat:8.7139,lon:77.7567},'Kanyakumari':{lat:8.0883,lon:77.5385},'Ramanathapuram':{lat:9.3639,lon:78.8395},
+    'Virudhunagar':{lat:9.5851,lon:77.9629},'Sivaganga':{lat:9.8483,lon:78.4800},'Pudukkottai':{lat:10.3797,lon:78.8237},
+    'Perambalur':{lat:11.2333,lon:78.8833},'Ariyalur':{lat:11.1403,lon:79.0779},'Kallakurichi':{lat:11.7383,lon:78.9573},
+    'Chengalpattu':{lat:12.6923,lon:79.9762},'Ranipet':{lat:12.9229,lon:79.3329},'Tirupathur':{lat:12.4960,lon:78.5620},
+    'Tenkasi':{lat:8.9598,lon:77.3157},'Mayiladuthurai':{lat:11.1038,lon:79.6517},'Tiruvarur':{lat:10.7723,lon:79.6367},
+    'Theni':{lat:10.0104,lon:77.4777},'Nilgiris':{lat:11.4916,lon:76.7337},
+};
+
+const fuelPrices={'Petrol':102.63,'Diesel':94.24,'Premium Petrol':108.90};
+
+function generateFallbackStations(district,area){
+    return [['Indian Oil','iocl'],['Bharat Petroleum','bpcl'],['HP','hpcl']].map((b,i)=>({
+        id:`f${i}`,name:`${b[0]} - ${area}`,location:`${area}, ${district}`,
+        distance:`${(0.3+i*0.5+Math.random()*0.4).toFixed(1)} km`,
+        rating:(4+Math.random()*0.8).toFixed(1),brand:b[1]
+    }));
+}
+
+let currentUser=JSON.parse(localStorage.getItem('fuelix_user'))||null;
+let selectedBunk=null,bookingData=null,selectedDistrict='',selectedArea='';
+
+document.addEventListener('DOMContentLoaded',()=>{
+    updateNavUI(); navigateTo('home'); populateDropdown(tnDistricts);
+    document.addEventListener('click',e=>{if(!e.target.closest('.district-search-wrap'))closeDropdown();});
+});
+
+function navigateTo(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(`${id}-section`).classList.add('active');
+    if(id==='history')renderHistory();
+    if(id==='home'){selectedBunk=null;selectedDistrict='';selectedArea='';}
+}
+function checkAuthAndBook(){if(currentUser)navigateTo('location');else{navigateTo('login');showMsg('logMsg','Please login to book fuel','error');}}
+function updateNavUI(){
+    if(currentUser){document.getElementById('navAuthLinks').style.display='none';document.getElementById('navUserLinks').style.display='flex';document.getElementById('userNameDisplay').innerText=currentUser.username;}
+    else{document.getElementById('navAuthLinks').style.display='flex';document.getElementById('navUserLinks').style.display='none';}
+}
+function logout(){currentUser=null;localStorage.removeItem('fuelix_user');updateNavUI();navigateTo('home');}
+
+function handleRegister(e){
+    e.preventDefault();
+    const username=document.getElementById('regUsername').value.trim();
+    const email=document.getElementById('regEmail').value.trim();
+    const password=document.getElementById('regPassword').value;
+    let users=JSON.parse(localStorage.getItem('fuelix_users'))||[];
+    if(users.find(u=>u.email===email)){showMsg('regMsg','Email already registered','error');return;}
+    users.push({username,email,password});
+    localStorage.setItem('fuelix_users',JSON.stringify(users));
+    showMsg('regMsg','Registered! Redirecting...','success');
+    setTimeout(()=>{e.target.reset();navigateTo('login');},1500);
+}
+function handleLogin(e){
+    e.preventDefault();
+    const email=document.getElementById('logEmail').value;
+    const password=document.getElementById('logPassword').value;
+    let users=JSON.parse(localStorage.getItem('fuelix_users'))||[];
+    const user=users.find(u=>u.email===email&&u.password===password);
+    if(user){currentUser={username:user.username,email:user.email};localStorage.setItem('fuelix_user',JSON.stringify(currentUser));updateNavUI();showMsg('logMsg','Login successful!','success');setTimeout(()=>{e.target.reset();navigateTo('location');},1000);}
+    else showMsg('logMsg','Invalid email or password','error');
+}
+
+function useGPS(){
+    const btn=document.getElementById('gpsBtn');
+    const status=document.getElementById('gpsStatus');
+    if(!navigator.geolocation){status.textContent='GPS not supported';status.className='gps-status error';return;}
+    btn.classList.add('loading');
+    btn.innerHTML='<i class="fa-solid fa-circle-notch fa-spin"></i> Locating...';
+    status.textContent='';
+    navigator.geolocation.getCurrentPosition(pos=>{
+        const{latitude,longitude}=pos.coords;
+        btn.classList.remove('loading');
+        btn.innerHTML='<i class="fa-solid fa-location-crosshairs"></i> Use My Location';
+        let nearest=null,minD=Infinity;
+        for(const[dist,coords]of Object.entries(districtCoords)){
+            const d=Math.sqrt(Math.pow(coords.lat-latitude,2)+Math.pow(coords.lon-longitude,2));
+            if(d<minD){minD=d;nearest=dist;}
+        }
+        if(nearest){status.textContent=`📍 Detected: ${nearest}`;status.className='gps-status found';selectDistrict(nearest);}
+        else{status.textContent='Could not match location';status.className='gps-status error';}
+    },err=>{
+        btn.classList.remove('loading');
+        btn.innerHTML='<i class="fa-solid fa-location-crosshairs"></i> Use My Location';
+        const msgs={1:'Permission denied',2:'Location unavailable',3:'Request timed out'};
+        status.textContent=msgs[err.code]||'GPS error';status.className='gps-status error';
+    },{timeout:8000,enableHighAccuracy:true});
+}
+
+function populateDropdown(list){
+    const dd=document.getElementById('districtDropdown');dd.innerHTML='';
+    if(!list.length){dd.innerHTML='<div class="district-option" style="color:var(--muted);cursor:default">No districts found</div>';return;}
+    list.forEach(d=>{const opt=document.createElement('div');opt.className='district-option'+(d===selectedDistrict?' selected-opt':'');opt.textContent=d;opt.onclick=()=>selectDistrict(d);dd.appendChild(opt);});
+}
+function filterDistricts(){const q=document.getElementById('districtSearch').value.toLowerCase();populateDropdown(tnDistricts.filter(d=>d.toLowerCase().includes(q)));openDropdown();}
+function openDropdown(){document.getElementById('districtDropdown').classList.add('open');}
+function closeDropdown(){document.getElementById('districtDropdown').classList.remove('open');}
+
+function selectDistrict(dist){
+    selectedDistrict=dist;selectedArea='';
+    document.getElementById('districtSearch').value=dist;closeDropdown();
+    document.getElementById('step1num').classList.add('done');
+    document.getElementById('step1num').innerHTML='<i class="fa-solid fa-check" style="font-size:0.65rem"></i>';
+    document.getElementById('stepBlock1').classList.remove('active-step');
+    document.getElementById('stepBlock1').classList.add('completed-step');
+    document.getElementById('stepBlock2').classList.add('active-step');
+    loadAreaChips(dist);
+    document.getElementById('nearbyArea').value='';
+    document.getElementById('findStationsBtn').disabled=true;
+    document.getElementById('bunksContainer').style.display='none';
+    document.getElementById('proceedToDetailsBtn').style.display='none';
+}
+
+function loadAreaChips(district){
+    const areas=districtAreas[district]||['Town Area','Bus Stand','Main Road','Railway Station','Market'];
+    const wrap=document.getElementById('areaChips');wrap.innerHTML='';
+    areas.forEach(area=>{const chip=document.createElement('div');chip.className='area-chip';chip.textContent=area;chip.onclick=()=>selectArea(area,chip);wrap.appendChild(chip);});
+}
+function selectArea(area,chipEl){selectedArea=area;document.getElementById('nearbyArea').value=area;document.querySelectorAll('.area-chip').forEach(c=>c.classList.remove('selected'));chipEl.classList.add('selected');document.getElementById('findStationsBtn').disabled=false;}
+function onAreaType(){const val=document.getElementById('nearbyArea').value.trim();selectedArea=val;document.querySelectorAll('.area-chip').forEach(c=>c.classList.remove('selected'));document.getElementById('findStationsBtn').disabled=val.length<2;}
+
+function findStations(){
+    if(!selectedDistrict||!selectedArea)return;
+    document.getElementById('searchLoader').style.display='block';
+    document.getElementById('bunksContainer').style.display='none';
+    document.getElementById('proceedToDetailsBtn').style.display='none';
+    setTimeout(()=>{document.getElementById('searchLoader').style.display='none';displayBunks();},700);
+}
+
+function displayBunks(){
+    const distStations=stationData[selectedDistrict];
+    let stations=(distStations&&distStations[selectedArea])?[...distStations[selectedArea]]:generateFallbackStations(selectedDistrict,selectedArea);
+    stations.sort((a,b)=>parseFloat(a.distance)-parseFloat(b.distance));
+    const brandColor={iocl:'#e63946',bpcl:'#3B82F6',hpcl:'#22c55e',reliance:'#FF9800',essar:'#9C27B0'};
+    const listDiv=document.getElementById('bunkList');listDiv.innerHTML='';
+    if(!stations.length){listDiv.innerHTML='<div class="no-stations"><i class="fa-solid fa-circle-xmark" style="font-size:2rem;display:block;margin-bottom:0.5rem"></i>No stations found.</div>';}
+    else{
+        stations.forEach(bunk=>{
+            const item=document.createElement('div');item.className='bunk-item';
+            item.innerHTML=`<div class="bunk-info"><h4><span style="color:${brandColor[bunk.brand]||'var(--primary)'}">⛽</span> ${bunk.name}</h4><p><i class="fa-solid fa-location-dot" style="color:var(--primary);margin-right:4px;font-size:0.72rem"></i>${bunk.location}</p></div><div class="bunk-meta"><div class="bunk-rating">★ ${bunk.rating}</div><div class="bunk-dist">${bunk.distance}</div><div class="bunk-prices">P ₹${fuelPrices['Petrol']} · D ₹${fuelPrices['Diesel']}</div></div>`;
+            item.addEventListener('click',()=>{document.querySelectorAll('.bunk-item').forEach(i=>i.classList.remove('selected'));item.classList.add('selected');selectedBunk=bunk;document.getElementById('proceedToDetailsBtn').style.display='block';});
+            listDiv.appendChild(item);
+        });
+    }
+    document.getElementById('mpPetrol').innerHTML=`₹${fuelPrices['Petrol']} <span>/L</span>`;
+    document.getElementById('mpDiesel').innerHTML=`₹${fuelPrices['Diesel']} <span>/L</span>`;
+    document.getElementById('mpPremium').innerHTML=`₹${fuelPrices['Premium Petrol']} <span>/L</span>`;
+    document.getElementById('trailText').textContent=`${selectedDistrict} › ${selectedArea}`;
+    document.getElementById('bunksCount').textContent=`${stations.length} station${stations.length!==1?'s':''} found`;
+    document.getElementById('bunksContainer').style.display='block';
+}
+
+function updateEstimate(){
+    const fuelType=document.getElementById('fuelType').value;
+    const qty=parseFloat(document.getElementById('fuelQty').value);
+    const est=document.getElementById('priceEstimator');
+    if(!fuelType||!qty||qty<=0){est.style.display='none';return;}
+    const rate=fuelPrices[fuelType]||0;
+    const total=(rate*qty).toFixed(2);
+    document.getElementById('estFuelType').textContent=fuelType;
+    document.getElementById('estRate').textContent=`₹${rate} / L`;
+    document.getElementById('estQty').textContent=`${qty} L`;
+    document.getElementById('estTotal').textContent=`₹${total}`;
+    est.style.display='block';
+}
+
+function goToDetails(){
+    if(!selectedBunk){alert('Please select a station first.');return;}
+    document.getElementById('selectedBunkInfo').innerHTML=`<div style="display:flex;align-items:center;gap:0.7rem;"><span style="font-size:1.4rem">⛽</span><div><div style="font-weight:600;color:var(--text);font-size:0.95rem">${selectedBunk.name}</div><div style="font-size:0.78rem;color:var(--muted)">${selectedBunk.location} · ${selectedBunk.distance} · ★${selectedBunk.rating}</div></div></div>`;
+    document.getElementById('priceEstimator').style.display='none';
+    document.getElementById('fuelType').value='';
+    document.getElementById('fuelQty').value='';
+    document.getElementById('vehicleNum').value='';
+    navigateTo('details');
+}
+
+function handleBooking(e){
+    e.preventDefault();
+    const fuelType=document.getElementById('fuelType').value;
+    const fuelQty=parseFloat(document.getElementById('fuelQty').value);
+    const vehicleNum=document.getElementById('vehicleNum').value.toUpperCase();
+    const rate=fuelPrices[fuelType]||0;
+    const total=(rate*fuelQty).toFixed(2);
+    document.getElementById('bookLoader').style.display='block';
+    setTimeout(()=>{
+        document.getElementById('bookLoader').style.display='none';
+        const bookingId='FLX'+Math.floor(100000+Math.random()*900000);
+        bookingData={id:bookingId,user:currentUser.username,email:currentUser.email,bunk:selectedBunk.name,location:selectedBunk.location,district:selectedDistrict,area:selectedArea,fuel:fuelType,qty:fuelQty,vehicle:vehicleNum,rate,total,date:new Date().toLocaleString(),status:'Confirmed'};
+        saveToHistory(bookingData);generateQR();navigateTo('qr');e.target.reset();selectedBunk=null;
+    },900);
+}
+
+function generateQR(){
+    const qrContainer=document.getElementById('qr-container');qrContainer.innerHTML='';
+    new QRCode(qrContainer,{text:JSON.stringify({ID:bookingData.id,Vehicle:bookingData.vehicle,Fuel:`${bookingData.qty}L ${bookingData.fuel}`}),width:180,height:180,colorDark:'#1F2937',colorLight:'#ffffff',correctLevel:QRCode.CorrectLevel.H});
+    document.getElementById('receiptDetails').innerHTML=`
+        <div class="receipt-row"><span class="receipt-label">Booking ID</span><span class="receipt-val">${bookingData.id}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Station</span><span class="receipt-val">${bookingData.bunk}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Location</span><span class="receipt-val">${bookingData.district} › ${bookingData.area}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Vehicle</span><span class="receipt-val">${bookingData.vehicle}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Fuel</span><span class="receipt-val">${bookingData.qty}L ${bookingData.fuel}</span></div>
+        <div class="receipt-row"><span class="receipt-label">Rate</span><span class="receipt-val">₹${bookingData.rate}/L</span></div>
+        <div class="receipt-row"><span class="receipt-label" style="color:var(--green);font-weight:600">Total Estimated</span><span class="receipt-val" style="color:var(--green);font-family:var(--font-head);font-size:1.05rem">₹${bookingData.total}</span></div>`;
+}
+
+function saveToHistory(booking){
+    const key=`fuelix_history_${booking.email}`;
+    let history=JSON.parse(localStorage.getItem(key))||[];
+    history.unshift(booking);
+    if(history.length>20)history=history.slice(0,20);
+    localStorage.setItem(key,JSON.stringify(history));
+}
+function getHistory(){if(!currentUser)return[];return JSON.parse(localStorage.getItem(`fuelix_history_${currentUser.email}`))||[];}
+
+function renderHistory(){
+    const container=document.getElementById('historyContent');
+    const history=getHistory();
+    if(!history.length){
+        container.innerHTML=`<div class="history-empty"><i class="fa-solid fa-receipt"></i><div style="font-size:1rem;margin-bottom:0.4rem;color:var(--text)">No bookings yet</div><div style="font-size:0.85rem">Your fuel booking history will appear here</div><button class="btn-primary" onclick="checkAuthAndBook()" style="margin-top:1.5rem;font-size:0.88rem;padding:0.65rem 1.5rem">Book Now →</button></div>`;
+        return;
+    }
+    container.innerHTML=`<div class="history-list">${history.map(b=>`
+        <div class="history-card">
+            <div class="hc-top">
+                <div><div class="hc-id">#${b.id}</div><div class="hc-date">${b.date}</div></div>
+                <span class="status-badge completed"><i class="fa-solid fa-circle-check" style="font-size:0.65rem"></i> ${b.status}</span>
+            </div>
+            <div class="hc-body">
+                <div class="hc-item"><div class="hc-item-label">Vehicle</div><div class="hc-item-val">${b.vehicle}</div></div>
+                <div class="hc-item"><div class="hc-item-label">Fuel Type</div><div class="hc-item-val">${b.fuel}</div></div>
+                <div class="hc-item"><div class="hc-item-label">Quantity</div><div class="hc-item-val">${b.qty} L</div></div>
+                <div class="hc-item"><div class="hc-item-label">District</div><div class="hc-item-val">${b.district}</div></div>
+            </div>
+            <div class="hc-footer">
+                <div class="hc-total">₹${b.total}</div>
+                <div class="hc-station">⛽ ${b.bunk}</div>
+            </div>
+        </div>`).join('')}</div>`;
+}
+
+function clearHistory(){
+    if(!currentUser)return;
+    if(!confirm('Clear all booking history?'))return;
+    localStorage.removeItem(`fuelix_history_${currentUser.email}`);
+    renderHistory();
+}
+
+function newBooking(){
+    selectedDistrict='';selectedArea='';selectedBunk=null;
+    document.getElementById('districtSearch').value='';
+    document.getElementById('nearbyArea').value='';
+    document.getElementById('areaChips').innerHTML='';
+    document.getElementById('bunksContainer').style.display='none';
+    document.getElementById('proceedToDetailsBtn').style.display='none';
+    document.getElementById('step1num').classList.remove('done');
+    document.getElementById('step1num').innerHTML='1';
+    document.getElementById('stepBlock1').classList.add('active-step');
+    document.getElementById('stepBlock1').classList.remove('completed-step');
+    document.getElementById('stepBlock2').classList.remove('active-step');
+    document.getElementById('findStationsBtn').disabled=true;
+    document.getElementById('gpsStatus').textContent='';
+    populateDropdown(tnDistricts);
+    navigateTo('location');
+}
+
+function showMsg(id,msg,type){const el=document.getElementById(id);el.innerText=msg;el.className=`msg ${type}`;setTimeout(()=>{el.style.display='none';},3500);}
+</script>
+</body>
+</html>
